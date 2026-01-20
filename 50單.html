@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英文單字大挑戰</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #ff9800;
+            --bg-color: #f0f9ff;
+        }
+        body {
+            font-family: 'Arial', "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+        h1 { color: #333; margin-bottom: 20px; }
+        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; color: #666; }
+        .question-box { font-size: 2.5rem; margin: 20px 0; color: var(--primary-color); }
+        input[type="text"] {
+            width: 80%;
+            padding: 12px;
+            font-size: 1.2rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus { border-color: var(--primary-color); }
+        button {
+            margin-top: 20px;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.3s;
+        }
+        button:hover { background-color: #45a049; }
+        button:active { transform: scale(0.95); }
+        .message { margin-top: 20px; font-size: 1.1rem; min-height: 1.5rem; font-weight: bold; }
+        .correct { color: #4CAF50; }
+        .wrong { color: #f44336; }
+        .summary-btn { background-color: var(--secondary-color); margin-left: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="quiz-container">
+    <h1>單字大挑戰 🎯</h1>
+    <div class="stats">
+        <span>剩餘：<span id="remaining">0</span></span>
+        <span>得分：<span id="score">0</span></span>
+    </div>
+    <div class="question-box" id="chinese-word">載入中...</div>
+    <p>請輸入英文單字：</p>
+    <input type="text" id="answer-input" autocomplete="off" placeholder="在此輸入...">
+    <br>
+    <button onclick="checkAnswer()">檢查答案</button>
+    <div class="message" id="message"></div>
+</div>
+
+<script>
+    const wordBank = [
+        {en: "one", zh: "一"}, {en: "two", zh: "二"}, {en: "three", zh: "三"}, {en: "four", zh: "四"}, {en: "five", zh: "五"},
+        {en: "six", zh: "六"}, {en: "seven", zh: "七"}, {en: "eight", zh: "八"}, {en: "nine", zh: "九"}, {en: "ten", zh: "十"},
+        {en: "hungry", zh: "餓的"}, {en: "thirsty", zh: "渴的"}, {en: "angry", zh: "生氣的"}, {en: "happy", zh: "快樂的"}, {en: "sad", zh: "傷心的"},
+        {en: "ball", zh: "球"}, {en: "doll", zh: "洋娃娃"}, {en: "kite", zh: "風箏"}, {en: "robot", zh: "機器人"}, {en: "car", zh: "車子"},
+        {en: "yo-yo", zh: "溜溜球"}, {en: "red", zh: "紅色"}, {en: "yellow", zh: "黃色"}, {en: "purple", zh: "紫色"}, {en: "blue", zh: "藍色"},
+        {en: "green", zh: "綠色"}, {en: "pink", zh: "粉紅色"}, {en: "rabbit", zh: "兔子"}, {en: "bird", zh: "鳥"}, {en: "cat", zh: "貓"},
+        {en: "dog", zh: "狗"}, {en: "ox", zh: "牛"}, {en: "frog", zh: "青蛙"}, {en: "dance", zh: "跳舞"}, {en: "draw", zh: "畫畫"},
+        {en: "sing", zh: "唱歌"}, {en: "swim", zh: "游泳"}, {en: "fly", zh: "飛"}, {en: "ride", zh: "騎"}, {en: "bike", zh: "腳踏車"},
+        {en: "father", zh: "爸爸"}, {en: "mother", zh: "媽媽"}, {en: "brother", zh: "哥哥/弟弟"}, {en: "sister", zh: "姊姊/妹妹"}, {en: "grandfather", zh: "祖父"},
+        {en: "grandmother", zh: "祖母"}, {en: "teacher", zh: "老師"}, {en: "student", zh: "學生"}, {en: "doctor", zh: "醫生"}, {en: "nurse", zh: "護士"},
+        {en: "cook", zh: "廚師"}
+    ];
+
+    let currentWords = [];
+    let currentIndex = 0;
+    let score = 0;
+
+    function initQuiz() {
+        currentWords = [...wordBank].sort(() => Math.random() - 0.5);
+        currentIndex = 0;
+        score = 0;
+        updateUI();
+    }
+
+    function updateUI() {
+        if (currentIndex < currentWords.length) {
+            document.getElementById('chinese-word').innerText = currentWords[currentIndex].zh;
+            document.getElementById('remaining').innerText = currentWords.length - currentIndex;
+            document.getElementById('score').innerText = score;
+            document.getElementById('answer-input').value = '';
+            document.getElementById('message').innerText = '';
+            document.getElementById('answer-input').focus();
+        } else {
+            document.getElementById('quiz-container').innerHTML = `
+                <h1>完成挑戰! 🎉</h1>
+                <p style="font-size: 1.5rem;">最終得分：${score} / ${wordBank.length}</p>
+                <button onclick="location.reload()">再玩一次</button>
+            `;
+        }
+    }
+
+    function checkAnswer() {
+        const userInput = document.getElementById('answer-input').value.trim().toLowerCase();
+        const correctAnswer = currentWords[currentIndex].en.toLowerCase();
+        const messageEl = document.getElementById('message');
+
+        if (userInput === correctAnswer) {
+            score++;
+            messageEl.innerText = "答對了！好棒！✨";
+            messageEl.className = "message correct";
+            setTimeout(() => {
+                currentIndex++;
+                updateUI();
+            }, 1000);
+        } else {
+            messageEl.innerText = `可惜！正確答案是: ${currentWords[currentIndex].en}`;
+            messageEl.className = "message wrong";
+            setTimeout(() => {
+                currentIndex++;
+                updateUI();
+            }, 2000);
+        }
+    }
+
+    // 支援 Enter 鍵送出
+    document.getElementById('answer-input').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            checkAnswer();
+        }
+    });
+
+    initQuiz();
+</script>
+
+</body>
+</html>
